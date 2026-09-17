@@ -1,0 +1,41 @@
+name: Request Intake
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  intake:
+    if: contains(github.event.issue.labels.*.name, 'prototype') || contains(github.event.issue.labels.*.name, 'request')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write request Markdown
+        env:
+          TITLE: ${{ github.event.issue.title }}
+          BODY: ${{ github.event.issue.body }}
+          NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          mkdir -p input
+          file="input/issue-${NUMBER}.md"
+          {
+            echo "# ${TITLE}"
+            echo
+            echo "Source: GitHub Issue #${NUMBER}"
+            echo
+            printf '%s\n' "${BODY}"
+          } > "${file}"
+
+      - name: Commit request Markdown
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add input/
+          git diff --cached --quiet || git commit -m "chore: intake issue #${{ github.event.issue.number }}"
+          git push
