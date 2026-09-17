@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +20,7 @@ type accepted struct {
 	Body     string `json:"body"`
 	Source   string `json:"source,omitempty"`
 	Issue    *struct {
-		Number int    `json:"number"`
+		Number  int    `json:"number"`
 		HTMLURL string `json:"html_url"`
 	} `json:"issue,omitempty"`
 }
@@ -51,6 +52,10 @@ func TestPostRequestsContract(t *testing.T) {
 			Title:    in.Title,
 			Body:     in.Body,
 			Source:   in.Source,
+			Issue: &struct {
+				Number  int    `json:"number"`
+				HTMLURL string `json:"html_url"`
+			}{Number: 42, HTMLURL: "https://github.com/bonsai/LAB-Rapid-Prototype/issues/42"},
 		})
 	})
 
@@ -63,7 +68,7 @@ func TestPostRequestsContract(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Post(ts.URL+"/requests", "application/json", bytesReader(data))
+	resp, err := http.Post(ts.URL+"/requests", "application/json", bytes.NewReader(data))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,20 +85,7 @@ func TestPostRequestsContract(t *testing.T) {
 	if !out.Accepted || out.Title != payload.Title || out.Body != payload.Body || out.Source != payload.Source {
 		t.Fatalf("response does not satisfy contract: %+v", out)
 	}
-}
-
-func bytesReader(data []byte) *byteReader { return &byteReader{data: data} }
-
-type byteReader struct {
-	data []byte
-	pos  int
-}
-
-func (r *byteReader) Read(p []byte) (int, error) {
-	if r.pos >= len(r.data) {
-		return 0, http.ErrBodyReadAfterClose
+	if out.Issue == nil || out.Issue.Number != 42 || out.Issue.HTMLURL == "" {
+		t.Fatalf("response does not expose issue: %+v", out.Issue)
 	}
-	n := copy(p, r.data[r.pos:])
-	r.pos += n
-	return n, nil
 }
