@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  title: Rapid Prototype Lab API
+  version: 0.1.0
+  description: Human and machine intake for prototype requests.
+servers:
+  - url: https://lab-rapid-prototype.example.com
+paths:
+  /requests:
+    post:
+      summary: Submit a prototype request
+      operationId: createRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Request'
+      responses:
+        '201':
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestAccepted'
+        '400':
+          description: Invalid request
+        '500':
+          description: Intake failure
+components:
+  schemas:
+    Request:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+        source:
+          type: string
+          enum: [human, llm, cli, mcp, ext]
+          default: human
+    RequestAccepted:
+      type: object
+      required: [accepted, title, body]
+      properties:
+        accepted:
+          type: boolean
+          example: true
+        title:
+          type: string
+        body:
+          type: string
+        source:
+          type: string
