@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Rapid Prototype Actions",
+  "version": "0.1.0",
+  "description": "Watch Rapid Prototype GitHub Actions from a browser extension.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.github.com/*"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
