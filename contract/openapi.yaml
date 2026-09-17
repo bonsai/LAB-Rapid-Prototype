@@ -45,7 +45,7 @@ components:
           default: human
     RequestAccepted:
       type: object
-      required: [accepted, title, body]
+      required: [accepted, title, body, issue]
       properties:
         accepted:
           type: boolean
@@ -56,3 +56,12 @@ components:
           type: string
         source:
           type: string
+        issue:
+          type: object
+          required: [number, html_url]
+          properties:
+            number:
+              type: integer
+            html_url:
+              type: string
+              format: uri
