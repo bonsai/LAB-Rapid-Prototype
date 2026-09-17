@@ -1,0 +1,48 @@
+name: AW Prototype
+
+on:
+  push:
+    paths:
+      - "input/**/*.md"
+      - "input.md"
+      - "cmd/prototyper/**"
+      - "go.mod"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: go build -o prototyper ./cmd/prototyper
+      - name: Find Markdown
+        id: input
+        shell: bash
+        run: |
+          file=$(find input -type f -name '*.md' -print -quit 2>/dev/null || true)
+          if [ -z "$file" ] && [ -f input.md ]; then file=input.md; fi
+          if [ -z "$file" ]; then echo 'No input Markdown found'; exit 1; fi
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+      - name: Run Agent
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          PROTOTYPE_INPUT: ${{ steps.input.outputs.file }}
+        run: ./prototyper
+      - name: Commit artifact
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/
+          git diff --cached --quiet || git commit -m "chore: generate prototype artifact"
+          git push
